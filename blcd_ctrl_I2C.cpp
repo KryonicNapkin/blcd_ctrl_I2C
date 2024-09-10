@@ -4,7 +4,6 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "LiquidCrystal_I2C.h"
 #include "blcd_ctrl_I2C.h"
 #include <Arduino.h>
 
@@ -14,13 +13,13 @@
  * TODO: finish blcd_read_line function 
  */
 
-static cpos_t blcd_init_pos(cpos_t init_pos) {
-    return init_pos;
-}
-/* DONE */
 int
 blcd_write(arrc_t*** array, const char* buff) {
     if (buff == NULL) {
+        return -1;
+    }
+    cpos_t cursor_pos = blcd_get_cur(*array);
+    if (!blcd_cmp(cursor_pos, BLCD_SEEK_UNDEF)) {
         return -1;
     }
     cpos_t crs_pos = blcd_get_cur(*array);
@@ -40,19 +39,19 @@ int
 blcd_update_cur(arrc_t*** array, cpos_t* curr_pos, const char* buff) {
     cpos_t curr = blcd_get_cur(*array);
     if (curr.line == -1 && curr.coll == -1) {
-        blcd_set_cur(array, DPY_SEEK_START);
+        blcd_set_cur(array, BLCD_SEEK_START, curr_pos);
         return 0;
     } else {
         int empty_colls = blcd_count_empty_colls(*array, curr.line);
         int used_colls = DPY_COLLS - empty_colls;
         int result = blcd_unset_cur(array);
         if (result == -1) {
-            return -1;
+            return result;
         }
         int new_coll_pos = curr.coll + (int)strlen(buff);
-        result = blcd_set_cur(array, (cpos_t){ curr.line, new_coll_pos });
+        result = blcd_set_cur(array, (cpos_t){ curr.line, new_coll_pos }, curr_pos);
         if (result == -1) {
-            return -1;
+            return result;
         }
         return 1;
     }
@@ -60,27 +59,42 @@ blcd_update_cur(arrc_t*** array, cpos_t* curr_pos, const char* buff) {
 
 /* is not working check null_test.ino in Arduino */ /* does not update the value */
 int
-blcd_set_cur(arrc_t*** array, cpos_t set_pos) {
+blcd_set_cur(arrc_t*** array, cpos_t set_pos, cpos_t* cur_pos) {
     cpos_t curr_pos = blcd_get_cur(*array);
-    if (curr_pos.line == -1 && curr_pos.coll == -1 && set_pos.line != -1 && set_pos.coll != -1) {
+    if (blcd_cmp(set_pos, *cur_pos) != 0) {
         array[set_pos.line][set_pos.coll]->crs_present = true;
-        return 1;
-    } else if (curr_pos.line != -1 && curr_pos.coll != -1 && set_pos.line != -1 && set_pos.coll != -1){
-        int result = blcd_unset_cur(array);
-        if (result == -1) {
-            return result;
-        }
-        array[set_pos.line][set_pos.coll]->crs_present = true;
+        cur_pos->line = set_pos.line;
+        cur_pos->coll = set_pos.coll;
         return 1;
     }
     return -1;
+}
+
+int blcd_isset_cur(arrc_t** array) {
+    cpos_t cur_pos = blcd_get_cur(array);
+    int res = 0;
+    if (!blcd_cmp(cur_pos, BLCD_SEEK_UNDEF)) {
+        return 0;
+    } else if (blcd_cmp(cur_pos, BLCD_SEEK_UNDEF) > 0) {
+        return 1;
+    }
+    return -1;
+}
+
+int blcd_cmp(cpos_t first_cur_pos, cpos_t sec_cur_pos) {
+    if (first_cur_pos.line == sec_cur_pos.line && first_cur_pos.coll == sec_cur_pos.coll) {
+        return 0;
+    } else if (first_cur_pos.line > sec_cur_pos.line && first_cur_pos.coll > sec_cur_pos.coll) {
+        return 1;
+    }
+    return 2;
 }
 
 /* DONE */
 int
 blcd_unset_cur(arrc_t*** array) {
     cpos_t curr_pos = blcd_get_cur(*array);
-    if (curr_pos.line == -1 && curr_pos.coll == -1) {
+    if (!blcd_cmp(curr_pos, BLCD_SEEK_UNDEF)) {
         return -1;
     }
     array[curr_pos.line][curr_pos.coll]->crs_present = false;
@@ -90,7 +104,7 @@ blcd_unset_cur(arrc_t*** array) {
 /* DONE */
 cpos_t
 blcd_get_cur(arrc_t** array) {
-    cpos_t current_cursor_pos = DPY_UNKNOWN;
+    cpos_t current_cursor_pos = BLCD_SEEK_UNDEF;
     for (int l = 0; l < DPY_LINES; ++l) {
         for (int c = 0; c < DPY_COLLS; ++c) {
             if (array[l][c].crs_present) {
@@ -123,16 +137,17 @@ blcd_read_line(arrc_t** array, int line) {
 /* DONE */
 char
 blcd_read_char(arrc_t** array, cpos_t char_pos) {
-    if (array[char_pos.line][char_pos.coll].c == '\0') {
+    char c = array[char_pos.line][char_pos.coll].c;
+    if (c == 0 || c == BLCD_EMPTY_CHAR) {
         return -1;
     }
-    return array[char_pos.line][char_pos.coll].c;
+    return c;
 }
 
 /* DONE */
 cpos_t
 blcd_find_char_line(arrc_t** array, char c, int line) {
-    cpos_t char_pos = { -1, -1};
+    cpos_t char_pos = BLCD_SEEK_UNDEF;
     for (int i = 0; i < DPY_COLLS; ++i) {
         if (array[line][i].c == c) {
             char_pos = { line, i};
@@ -148,8 +163,8 @@ blcd_alloc(arrc_t*** arr, size_t nmemb, size_t memb_size) {
     for (size_t i = 0; i < nmemb; i++) {
         (*arr)[i] = (arrc_t*)calloc(memb_size, sizeof(arrc_t));
     }
-    cpos_t init_pos = blcd_init_pos(DPY_UNKNOWN);
-    return init_pos;
+    /* Set initial cursor position to { -1, -1 } so undefined */
+    return BLCD_SEEK_UNDEF;
 }
 
 /* DONE */
@@ -193,7 +208,7 @@ blcd_count_empty_lines(arrc_t** array) {
     int ccount = 0, lcount = 0;
     for (int l = 0; l < DPY_LINES; ++l) {
         for (int c = 0; c < DPY_COLLS; ++c) {
-            if (array[l][c].c == 0) {
+            if (array[l][c].c == 0 || array[l][c].c == BLCD_EMPTY_CHAR) {
                 ccount++;
             }
         }
