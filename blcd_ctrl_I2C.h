@@ -22,20 +22,22 @@ typedef struct {
 #define DPY_LINES 2
 #endif
 
-#define DPY_UNKNOWN      (cpos_t){ -1, -1 }
-#define DPY_SEEK_START   (cpos_t){ 0, 0 }
-#define DPY_SEEK_END     (cpos_t){ DPY_LINES - 1, DPY_COLLS - 1 }
-#define DPY_SEEK_LEFT_D  (cpos_t){ DPY_LINES - 1, 0 }
-#define DPY_SEEK_RIGHT_U (cpos_t){ 0, DPY_COLLS - 1 }
+#define BLCD_EMPTY_CHAR   '\xa0'
+
+#define BLCD_SEEK_UNDEF   (cpos_t){ -1, -1 }
+#define BLCD_SEEK_START   (cpos_t){ 0, 0 }
+#define BLCD_SEEK_END     (cpos_t){ DPY_LINES - 1, DPY_COLLS - 1 }
+#define BLCD_SEEK_LEFT_D  (cpos_t){ DPY_LINES - 1, 0 }
+#define BLCD_SEEK_RIGHT_U (cpos_t){ 0, DPY_COLLS - 1 }
 
 #define DPY_SIZE(l, c) ((DPY_LINES) * (DPY_COLLS))
 
-static cpos_t blcd_init_pos(cpos_t init_pos);
-int blcd_write(arrc_t*** array, const char* buff);
 int blcd_write(arrc_t*** array, const char* buff);
 int blcd_write_at_cur(arrc_t*** array, cpos_t curr_pos, const char* buff);
 int blcd_update_cur(arrc_t*** array, cpos_t* curr_pos, const char* buff);
-int blcd_set_cur(arrc_t*** array, cpos_t pos);
+int blcd_set_cur(arrc_t*** array, cpos_t pos, cpos_t* curr_pos);
+int blcd_isset_cur(arrc_t** array);
+int blcd_cmp(cpos_t first_cur_pos, cpos_t sec_cur_pos);
 int blcd_unset_cur(arrc_t*** array);
 cpos_t blcd_get_cur(arrc_t** array);
 char* blcd_read_line(arrc_t** array, int line);
