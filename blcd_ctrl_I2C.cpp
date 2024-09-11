@@ -8,9 +8,7 @@
 #include <Arduino.h>
 
 /*
- * TODO: implement blcd_update_pos (not working) function to update the current cursor position
- *       according to the lenght of buff
- * TODO: finish blcd_read_line function 
+ * TODO: implement blcd_write_at_pos function wiht the BLCD_EMPTY_CHAR 
  */
 
 int
