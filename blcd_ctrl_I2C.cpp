@@ -54,7 +54,6 @@ blcd_update_cur(arrc_t*** array, cpos_t* curr_pos, const char* buff) {
     }
 }
 
-/* is not working check null_test.ino in Arduino */ /* does not update the value */
 int
 blcd_set_cur(arrc_t*** array, cpos_t set_pos, cpos_t* cur_pos) {
     cpos_t curr_pos = blcd_get_cur(*array);
@@ -87,7 +86,6 @@ int blcd_cmp(cpos_t first_cur_pos, cpos_t sec_cur_pos) {
     return 2;
 }
 
-/* DONE */
 int
 blcd_unset_cur(arrc_t*** array) {
     cpos_t curr_pos = blcd_get_cur(*array);
@@ -98,7 +96,6 @@ blcd_unset_cur(arrc_t*** array) {
     return 1;
 }
 
-/* DONE */
 cpos_t
 blcd_get_cur(arrc_t** array) {
     cpos_t current_cursor_pos = BLCD_SEEK_UNDEF;
@@ -114,7 +111,6 @@ blcd_get_cur(arrc_t** array) {
     return current_cursor_pos;
 }
 
-/* DONE */
 char*
 blcd_read_line(arrc_t** array, int line) {
     int count = 0;
@@ -131,7 +127,6 @@ blcd_read_line(arrc_t** array, int line) {
     return line_str;
 }
 
-/* DONE */
 char
 blcd_read_char(arrc_t** array, cpos_t char_pos) {
     char c = array[char_pos.line][char_pos.coll].c;
@@ -141,7 +136,6 @@ blcd_read_char(arrc_t** array, cpos_t char_pos) {
     return c;
 }
 
-/* DONE */
 cpos_t
 blcd_find_char_line(arrc_t** array, char c, int line) {
     cpos_t char_pos = BLCD_SEEK_UNDEF;
@@ -153,7 +147,6 @@ blcd_find_char_line(arrc_t** array, char c, int line) {
     return char_pos;
 }
 
-/* DONE */
 cpos_t
 blcd_alloc(arrc_t*** arr, size_t nmemb, size_t memb_size) {
     *arr = (arrc_t**)calloc(nmemb, sizeof(arrc_t*));
@@ -164,13 +157,11 @@ blcd_alloc(arrc_t*** arr, size_t nmemb, size_t memb_size) {
     return BLCD_SEEK_UNDEF;
 }
 
-/* DONE */
 void 
 blcd_alloc_line(arrc_t*** arr, int line, size_t memb_size) {
     (*arr)[line] = (arrc_t*)calloc(memb_size, sizeof(arrc_t));
 }
 
-/* DONE */
 void
 blcd_free(arrc_t*** arr, size_t nmemb) {
     for (size_t i = 0; i < nmemb; i++) {
@@ -179,27 +170,23 @@ blcd_free(arrc_t*** arr, size_t nmemb) {
     free(*arr);
 }
 
-/* DONE */
 void
 blcd_free_line(arrc_t*** arr, int line) {
     free((*arr)[line]);
 }
 
-/* DONE */
 cpos_t
 blcd_clear(arrc_t*** array) {
     blcd_free(array, DPY_LINES);
     blcd_alloc(array, DPY_LINES, DPY_COLLS);
 }
 
-/* DONE */
 void
 blcd_clear_line(arrc_t*** array, int line) {
     blcd_free_line(array, DPY_LINES);
     blcd_alloc_line(array, line, DPY_COLLS);
 }
 
-/* DONE */
 int
 blcd_count_empty_lines(arrc_t** array) {
     int ccount = 0, lcount = 0;
@@ -216,7 +203,6 @@ blcd_count_empty_lines(arrc_t** array) {
     }
 }
 
-/* DONE */
 int
 blcd_count_empty_colls(arrc_t** array, int line) {
     int ccount = 0;
